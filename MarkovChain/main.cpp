@@ -9,15 +9,13 @@ using namespace std;
 
 class MarkovChain {
 public:
-	MarkovChain(const string& file_name_) { 
-
+	MarkovChain(const string& file_name_ = "") { 
 #ifdef _DEBUG
 		input_words = { "now", "he", "is", "gone", "she", "said",
 						"he", "is", "gone", "for", "good" };
 #else
 		LoadFromFile(file_name_);
 #endif // _DEBUG
-
 	}
 
 	void Generate(int output_length_, int prefix_length_ = 2) {
@@ -38,17 +36,17 @@ public:
 
 		random_device device;
 		mt19937 generator(device());
-		uniform_int_distribution<> rand_element(0, dict.size() - 1);
 
 		// Selecting random element from dictionary
 		auto it = dict.begin();
+		uniform_int_distribution<> rand_element(0, dict.size() - 1);
 		advance(it, rand_element(generator));
 		pair<vector<string>, vector<string>> element = *it;
 
 		// Pushing random prefix right to the output word vector
 		output_words.insert(output_words.end(), element.first.begin(), element.first.end());
 
-		for (int i = 0; i < output_length_; i++) {
+		for (int i = 0; i < output_length_ && !element.second.empty(); i++) {
 			// Distribution of integers meaning position in postfix vector
 			uniform_int_distribution<> rand_postfix(0, element.second.size() - 1);
 
@@ -64,7 +62,6 @@ public:
 			prefix.push_back(postfix);
 
 			element = make_pair(prefix, dict[prefix]);
-			if (element.second.empty()) break;
 		}
 	}
 
@@ -74,7 +71,11 @@ public:
 		cout << "\n";
 	}
 
-private:
+	void Reset() {
+		input_words.clear();
+		output_words.clear();
+	}
+
 	void LoadFromFile(const string& file_name_) {
 		fstream input_file(file_name_, ios::in);
 		if (!input_file.is_open()) return;
@@ -86,6 +87,18 @@ private:
 		input_file.close();
 	}
 
+	vector<string> GetRawResult() {
+		return output_words;
+	}
+
+	string GetFormatedResult() {
+		string formated_result;
+		for (auto word : output_words)
+			formated_result += word + " ";
+		return formated_result;
+	}
+
+private:
 	vector<string> input_words;
 	vector<string> output_words;
 };
